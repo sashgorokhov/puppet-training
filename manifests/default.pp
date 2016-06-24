@@ -1,6 +1,3 @@
-stage { 'prepare':
-  before => Stage['main'],
-}
 
 exec { 'apt-get update':
   command => '/usr/bin/apt-get update',
@@ -33,38 +30,43 @@ file_line { 'alias kubectl-system':
   path => '/home/vagrant/.bashrc'
 }
 
-file_line { 'add master hostname':
-  line => '127.0.0.1 master',
+file_line { 'add hostname':
+  line => "${master_ip} master",
   path => '/etc/hosts'
 }
 
-$project_root = '/home/vagrant/kubernetes'
-$downloads_dir = "${project_root}/downloads"
-$releases_dir = "${project_root}/releases"
-
-$kubernetes_url = 'https://github.com/kubernetes/kubernetes/releases/download/v1.3.0-beta.1/kubernetes.tar.gz'
-$kubernetes_tar = "${downloads_dir}/kubernetes-v1.3.0-beta.1.tar.gz"
-$kubernetes_release = "${releases_dir}/kubernetes-v1.3.0-beta.1"
-$kubernetes_binaries_to_copy = ['hyperkube', 'kubectl']
-
-file { $kubernetes_tar:
-  ensure => file,
-  replace => false,
-  source => "${kubernetes_url}",
-}~>
-exec { 'extract kubernetes release':
-  command => "/bin/tar -C ${kubernetes_tar} --strip-components 1 -xzf ${kubernetes_release}",
-  creates => "${kubernetes_release}"
+downloader {'get kubernetes':
+  download_url => $kubernetes_url,
+  tarname => $kubernetes_tarname,
+  extracted => $kubernetes_release
 }~>
 exec { 'extract kubernetes release binaries':
   command => "/bin/tar -C ${kubernetes_release} --strip-components 1 -xzf ${kubernetes_release}/server/kubernetes-server-linux-amd64.tar.gz",
-  creates => "${kubernetes_release}/server/bin"
+  creates => $kubernetes_bin_dir
+}->
+binary {['hyperkube', 'kubectl']:
+  bin_dir => $kubernetes_bin_dir
 }
 
-#$kubernetes_binaries_to_copy.each |String $binary| {
-#  file { "/usr/bin/$binary":
-#    ensure => file,
-#    source => "file:${kubernetes_release}/server/bin/${binary}",
-#    mode => "0777"
-#  }
-#}
+downloader {'get etcd':
+  download_url => $etcd_url,
+  tarname => $etcd_tarname,
+  extracted => $etcd_release,
+  bin_dir => $etcd_release,
+  binaries_to_copy => ['etcd', 'etcdctl']
+}
+
+downloader {'get flannel':
+  download_url => $flannel_url,
+  tarname => $flannel_tarname,
+  extracted => $flannel_release,
+  bin_dir => $flannel_release,
+  binaries_to_copy => ['flanneld']
+}
+
+downloader {'get heapser':
+  download_url => $heapster_url,
+  tarname => $heapster_tarname,
+  extracted => $heapster_release,
+}
+

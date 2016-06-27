@@ -58,6 +58,10 @@ if $hostname == 'puppet' {
   service {'etcd':
     ensure => running,
     enable => true,
+  }~>
+  exec {'wait etcd to start':
+    command => '/bin/sleep 8s',
+    refreshonly => true
   }
 
   file {'/etc/flannel':
@@ -85,18 +89,13 @@ if $hostname == 'puppet' {
 }
 
 class {'docker':
-  require => Service['flanneld'],
-  docker_users => ['vagrant'],
-  labels => ["host=${hostname}"],
+  require => Service['flanneld']
 }
 
 if $hostname == 'puppet' {
-  docker::run { 'registry':
-    image => 'registry:2',
-    volumes => '/mnt/registry:/var/lib/registry',
-    ports => ['5000'],
-    expose => ['5000'],
-    restart => 'always'
+  class {'docker::registry':
+    require => Class['docker']
   }
 }
+
 

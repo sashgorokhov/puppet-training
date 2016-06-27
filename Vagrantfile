@@ -11,6 +11,7 @@ puppet_nodes = [
 ]
 # NOTE: If you add something to puppet_nodes, dont forget to modify puppet/manifests/hosts.pp !!
 
+# if, while provisioning with puppet you getting errors like "Could not evaluate: undefined method `exist?'", then simply re-run provision.
 
 Vagrant.configure(2) do |config|
     config.vm.box = "ubuntu/trusty64"

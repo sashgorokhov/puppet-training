@@ -5,7 +5,7 @@ domain = 'example.com'
 box = 'ubuntu/trusty64'
 
 puppet_nodes = [
-  {:hostname => 'puppet',  :ip => '172.16.32.10', :fwdhost => 8140, :fwdguest => 8140, :ram => 4096},
+  {:hostname => 'puppet',  :ip => '172.16.32.10', :fwdhost => 8140, :fwdguest => 8140, :ram => 4096, :master => true},
   {:hostname => 'node1', :ip => '172.16.32.11'},
 #  {:hostname => 'node2', :ip => '172.16.32.12'},
 ]
@@ -22,6 +22,9 @@ Vagrant.configure(2) do |config|
             node_config.vm.network :private_network, ip: node[:ip]
             if node[:fwdhost]
                 node_config.vm.network :forwarded_port, guest: node[:fwdguest], host: node[:fwdhost]
+            end
+            if node[:master]
+                node_config.vm.synced_folder "kubernetes/manifests/", "/etc/kubernetes/manifests"
             end
             memory = node[:ram] ? node[:ram] : 1024;
             node_config.vm.provider :virtualbox do |vb|

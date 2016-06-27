@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: monitoring-grafana
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: monitoring-grafana
+  name: monitoring-grafana
+  namespace: kube-system
+spec:
+  ports:
+  - name: monitoring-grafana
+    port: 3000
+  selector:
+    name: monitoring-grafana

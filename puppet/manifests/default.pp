@@ -22,24 +22,24 @@ class {'releases-binaries':
   require => Class['releases::']
 }
 
-file {'/etc/bashrc':
+file {'/etc/bash.bashrc':
   ensure => file
 }
 
 node node1, node2 {
   file_line {'kubectl to master':
     ensure => present,
-    path => '/etc/bashrc',
+    path => '/etc/bash.bashrc',
     line   => 'alias kubectl="kubectl --server http://master:8080"',
-    require => File['/etc/bashrc']
+    require => File['/etc/bash.bashrc']
   }
 }
 
 file_line {'kubectl-system':
   ensure => present,
-  path => '/etc/bashrc',
+  path => '/etc/bash.bashrc',
   line   => 'alias kubectl-system="kubectl --namespace=kube-system"',
-  require => File['/etc/bashrc']
+  require => File['/etc/bash.bashrc']
 }
 
 
@@ -93,9 +93,29 @@ class {'docker':
 }
 
 if $hostname == 'puppet' {
-  class {'docker::registry':
+  service {'kube-apiserver':
+    ensure => running,
+    enable => true,
     require => Class['docker']
+  }->
+  exec {'label master node':
+    command => '/bin/sleep 5s && /usr/bin/kubectl label nodes puppet --overwrite node=master',
+    unless => '/usr/bin/kubectl get no -l node=master | /bin/grep -q master',
   }
+
+  #class {'heapster':
+  #  require => Class['releases::heapster']
+  #}
+
 }
 
-
+service {'kubelet':
+  ensure => running,
+  enable => true,
+  require => Class['docker']
+}
+service {'kube-proxy':
+  ensure => running,
+  enable => true,
+  require => Class['docker']
+}

@@ -24,12 +24,10 @@ class docker {
   group {'docker':
     ensure => present,
     members => ['vagrant']
-  }
-
+  }->
   service {'docker':
     ensure => running,
     enable => true,
-    subscribe => File['/etc/default/docker']
   }
 
 }
